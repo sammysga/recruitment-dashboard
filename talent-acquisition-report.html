@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PSP Talent Acquisition - Business Intelligence Dashboard</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <link rel="stylesheet" href="dashboard.css">
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Header Section -->
+        <div class="header">
+            <h1>PSP Talent Acquisition Dashboard</h1>
+            <p>Business Intelligence & Analytics Platform</p>
+            <div class="date-badge">
+                📅 As of July 11, 2025
+            </div>
+            <div class="info-button" onclick="showDataInfo()">
+                <span class="info-icon">ℹ️</span>
+                <span class="info-text">Data Sources</span>
+            </div>
+
+        </div>
+
+        <!-- AI Insights Banner -->
+        <div class="insights-banner" onclick="showInsights()">
+            🤖 Click here for AI-powered insights and recommendations based on your data
+        </div>
+
+        <!-- Navigation Tabs -->
+        <div class="nav-tabs">
+            <button class="nav-tab active" onclick="showTab('overview')">📊 Executive Overview</button>
+            <button class="nav-tab" onclick="showTab('pipeline')">🔄 Pipeline Analysis</button>
+            <!-- <button class="nav-tab" onclick="showTab('performance')">📈 Performance Metrics</button> -->
+            <button class="nav-tab" onclick="showTab('detailed')">📋 Detailed Data</button>
+        </div>
+
+        <!-- Main Content Area -->
+        <div class="main-content">
+            
+            <!-- Overview Tab -->
+            <div id="overview" class="tab-content active">
+                <!-- KPI Cards -->
+                <div class="kpi-grid">
+                    <div class="kpi-card blue" onclick="drillDown('totalCVs')">
+                        <div class="kpi-label">Total CVs Processed</div>
+                        <div class="kpi-value" id="total-cvs">1,269</div>
+                        <div class="kpi-change neutral">Combined PSP + PMO</div>
+                    </div>
+                    
+                    <div class="kpi-card green" onclick="drillDown('fillRate')">
+                        <div class="kpi-label">Overall Fill Rate</div>
+                        <div class="kpi-value" id="fill-rate">46%</div>
+                        <div class="kpi-change positive">PSP: 46% | PMO: 12%</div>
+                    </div>
+                    
+                    <div class="kpi-card orange" onclick="drillDown('activeRoles')">
+                        <div class="kpi-label">Active Open Roles</div>
+                        <div class="kpi-value" id="active-roles">59</div>
+                        <div class="kpi-change neutral">PSP: 44 | PMO: 15</div>
+                    </div>
+                    
+                    <div class="kpi-card red" onclick="drillDown('bottleneck')">
+                        <div class="kpi-label">Critical Bottleneck</div>
+                        <div class="kpi-value" id="bottleneck">HRBP Review</div>
+                        <div class="kpi-change negative">70 CVs pending</div>
+                    </div>
+                    
+                    <div class="kpi-card purple" onclick="drillDown('hires')">
+                        <div class="kpi-label">YTD Successful Hires</div>
+                        <div class="kpi-value" id="ytd-hires">39</div>
+                        <div class="kpi-change positive">+37 in July</div>
+                    </div>
+                    
+                    <div class="kpi-card teal" onclick="drillDown('conversion')">
+                        <div class="kpi-label">CV to Hire Rate</div>
+                        <div class="kpi-value" id="conversion-rate">3.1%</div>
+                        <div class="kpi-change neutral">Industry avg: 2-4%</div>
+                    </div>
+                </div>
+
+                <!-- Chart Grid -->
+                <div class="chart-grid">
+                    <div class="chart-container">
+                        <div class="chart-title">📊 Monthly Hiring Trends (PSP)</div>
+                        <div class="chart-wrapper">
+                            <canvas id="monthly-trends-chart"></canvas>
+                        </div>
+                    </div>
+                    
+                    <div class="chart-container">
+                        <div class="chart-title">🎯 Division Performance Comparison</div>
+                        <div class="chart-wrapper">
+                            <canvas id="division-comparison-chart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="chart-container full-width-chart">
+                    <div class="chart-title">🔄 Recruitment Pipeline Funnel (Interactive)</div>
+                    <div class="chart-wrapper">
+                        <canvas id="pipeline-funnel-chart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pipeline Analysis Tab -->
+            <div id="pipeline" class="tab-content">
+                <div class="chart-grid">
+                    <div class="chart-container">
+                        <div class="chart-title">⏳ Time-to-Hire Analysis</div>
+                        <div class="chart-wrapper">
+                            <canvas id="time-to-hire-chart"></canvas>
+                        </div>
+                    </div>
+                    
+                    <div class="chart-container">
+                        <div class="chart-title">🚨 Bottleneck Identification</div>
+                        <div class="chart-wrapper">
+                            <canvas id="bottleneck-chart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="chart-container full-width-chart">
+                    <div class="chart-title">📈 Conversion Rates by Stage</div>
+                    <div class="chart-wrapper">
+                        <canvas id="conversion-rates-chart"></canvas>
+                    </div>
+                </div>
+
+                <div class="chart-grid">
+                    <div class="chart-container">
+                        <div class="chart-title">🎯 Top Positions by Volume</div>
+                        <div class="chart-wrapper">
+                            <canvas id="top-positions-chart"></canvas>
+                        </div>
+                    </div>
+                    
+                    <div class="chart-container">
+                        <div class="chart-title">📊 Current Status Distribution</div>
+                        <div class="chart-wrapper">
+                            <canvas id="status-distribution-chart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Performance Metrics Tab -->
+            <div id="performance" class="tab-content">
+                <div class="kpi-grid">
+                    <div class="kpi-card blue">
+                        <div class="kpi-label">PSP Pipeline Health</div>
+                        <div class="kpi-value">78%</div>
+                        <div class="kpi-change positive">Strong momentum</div>
+                    </div>
+                    
+                    <div class="kpi-card orange">
+                        <div class="kpi-label">PMO Pipeline Health</div>
+                        <div class="kpi-value">42%</div>
+                        <div class="kpi-change negative">Needs attention</div>
+                    </div>
+                    
+                    <div class="kpi-card green">
+                        <div class="kpi-label">Interview Success Rate</div>
+                        <div class="kpi-value">68%</div>
+                        <div class="kpi-change positive">Above target</div>
+                    </div>
+                    
+                    <div class="kpi-card purple">
+                        <div class="kpi-label">Offer Acceptance Rate</div>
+                        <div class="kpi-value">85%</div>
+                        <div class="kpi-change positive">Excellent</div>
+                    </div>
+                </div>
+
+                <div class="chart-grid">
+                    <div class="chart-container">
+                        <div class="chart-title">📊 PSP vs PMO Performance</div>
+                        <div class="chart-wrapper">
+                            <canvas id="psp-pmo-performance-chart"></canvas>
+                        </div>
+                    </div>
+                    
+                    <div class="chart-container">
+                        <div class="chart-title">🎯 Weekly Progress Tracking</div>
+                        <div class="chart-wrapper">
+                            <canvas id="weekly-progress-chart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Detailed Data Tab -->
+            <div id="detailed" class="tab-content">
+                <div class="data-table-container">
+                    <div class="chart-title">🔍 Detailed Pipeline Status - PSP Division</div>
+                    <table class="data-table" id="psp-table">
+                        <thead>
+                            <tr>
+                                <th>Position</th>
+                                <th>Total CVs</th>
+                                <th>TA Review</th>
+                                <th>HRBP Review</th>
+                                <th>HR Interview</th>
+                                <th>Panel Interview</th>
+                                <th>Final Interview</th>
+                                <th>Status</th>
+                                <th>Action Required</th>
+                            </tr>
+                        </thead>
+                        <tbody id="psp-table-body">
+                            <!-- Data will be populated by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="data-table-container">
+                    <div class="chart-title">🔍 Detailed Pipeline Status - PMO Division</div>
+                    <table class="data-table" id="pmo-table">
+                        <thead>
+                            <tr>
+                                <th>Position</th>
+                                <th>Total CVs</th>
+                                <th>TA Review</th>
+                                <th>HRBP Review</th>
+                                <th>HR Interview</th>
+                                <th>Panel Interview</th>
+                                <th>Status</th>
+                                <th>Action Required</th>
+                            </tr>
+                        </thead>
+                        <tbody id="pmo-table-body">
+                            <!-- Data will be populated by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for Insights -->
+    <div id="insights-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <h2>🤖 AI-Powered Insights & Recommendations</h2>
+            <div id="insights-content">
+                <!-- Insights will be populated by JavaScript -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for Drill-down Details -->
+    <div id="drilldown-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeDrilldown()">&times;</span>
+            <h2 id="drilldown-title">Detailed Analysis</h2>
+            <div id="drilldown-content">
+                <!-- Drill-down content will be populated by JavaScript -->
+            </div>
+        </div>
+    </div>
+
+    <div id="data-info-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeDataInfo()">&times;</span>
+            <h2>📊 Data Sources & Methodology</h2>
+            <div id="data-info-content">
+                <div style="padding: 20px;">
+                    <h3>🎯 Data Collection Period</h3>
+                    <p><strong>PSP Data:</strong> As of July 11, 2025</p>
+                    <p><strong>PMO Data:</strong> As of July 4, 2025</p>
+                    
+                    <h3>📋 Data Sources</h3>
+                    <ul>
+                        <li><strong>Sprout HR System:</strong> CV applications and candidate tracking</li>
+                        <li><strong>Recruitment Partners:</strong> External agency submissions</li>
+                        <li><strong>HRBP Reports:</strong> Interview schedules and feedback</li>
+                        <li><strong>Weekly Status Updates:</strong> Pipeline progression data</li>
+                    </ul>
+                    
+                    <h3>🔢 Key Calculations</h3>
+                    <div style="background: #f8f9fa; padding: 15px; border-radius: 6px; margin: 15px 0;">
+                        <h4>Fill Rate Calculation:</h4>
+                        <p><strong>PSP:</strong> 37 filled positions ÷ 81 total positions = 46%</p>
+                        <p><strong>PMO:</strong> 2 filled positions ÷ 17 total positions = 12%</p>
+                        <p><strong>Overall:</strong> 39 filled positions ÷ 98 total positions = 40%</p>
+                    </div>
+                    
+                    <div style="background: #f8f9fa; padding: 15px; border-radius: 6px; margin: 15px 0;">
+                        <h4>Conversion Rate:</h4>
+                        <p>Total Hires ÷ Total CVs Processed × 100</p>
+                        <p>Example: 8 hires ÷ 1,269 CVs = 0.6% CV-to-hire rate</p>
+                    </div>
+                    
+                    <h3>📊 Pipeline Stages Explained</h3>
+                    <ol>
+                        <li><strong>CVs Received:</strong> Total applications via Sprout + recruitment partners</li>
+                        <li><strong>TA CV Review:</strong> Initial screening by Talent Acquisition team</li>
+                        <li><strong>HRBP CV Review:</strong> Secondary review by HR Business Partner</li>
+                        <li><strong>HR Interview:</strong> First round interview with HR</li>
+                        <li><strong>HRBP Interview:</strong> Technical/role-specific interview</li>
+                        <li><strong>Panel Interview:</strong> Multi-stakeholder evaluation</li>
+                        <li><strong>Final Interview:</strong> Final decision-maker interview (Noel/Andres)</li>
+                        <li><strong>Duff Assessment:</strong> Final evaluation process</li>
+                        <li><strong>Job Offer:</strong> Offer extended to candidate</li>
+                    </ol>
+                    
+                    <h3>⚠️ Data Limitations</h3>
+                    <ul>
+                        <li>PMO data is 7 days older than PSP data</li>
+                        <li>Some positions may have overlapping candidates between stages</li>
+                        <li>Manual data entry may contain minor inconsistencies</li>
+                        <li>Real-time updates not reflected until next reporting cycle</li>
+                    </ul>
+                    
+                    <h3>🔄 Update Frequency</h3>
+                    <p><strong>Weekly:</strong> Pipeline status and candidate progression</p>
+                    <p><strong>Monthly:</strong> Overall metrics and trend analysis</p>
+                    <p><strong>As-needed:</strong> Critical updates and new hires</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tooltip -->
+    <div id="tooltip" class="tooltip"></div>
+
+    <!-- Load JavaScript -->
+    <script src="dashboard.js"></script>
+</body>
+</html>

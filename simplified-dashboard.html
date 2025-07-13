@@ -1,0 +1,1044 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PSP Talent Acquisition Dashboard</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #f8f9fa;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .dashboard-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, #2c3e50, #3498db);
+            color: white;
+            padding: 30px;
+            text-align: center;
+            position: relative;
+        }
+
+        .header h1 {
+            font-size: 2.2em;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .date-badge {
+            position: absolute;
+            top: 20px;
+            right: 30px;
+            background: rgba(255,255,255,0.2);
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            backdrop-filter: blur(10px);
+        }
+
+        /* Navigation */
+        .nav-tabs {
+            display: flex;
+            background: #34495e;
+        }
+
+        .nav-tab {
+            flex: 1;
+            padding: 18px 25px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 600;
+            color: rgba(255,255,255,0.7);
+            transition: all 0.3s ease;
+            border-bottom: 3px solid transparent;
+        }
+
+        .nav-tab.active {
+            color: white;
+            border-bottom-color: #3498db;
+            background: rgba(255,255,255,0.1);
+        }
+
+        .nav-tab:hover {
+            background: rgba(255,255,255,0.1);
+            color: white;
+        }
+
+        /* Main Content */
+        .main-content {
+            padding: 30px;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* KPI Grid */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+            margin-bottom: 35px;
+        }
+
+        .kpi-card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            cursor: pointer;
+            border-left: 5px solid #3498db;
+        }
+
+        .kpi-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+
+        .kpi-card.success { border-left-color: #27ae60; }
+        .kpi-card.warning { border-left-color: #f39c12; }
+        .kpi-card.danger { border-left-color: #e74c3c; }
+        .kpi-card.info { border-left-color: #3498db; }
+
+        .kpi-label {
+            color: #7f8c8d;
+            font-size: 0.9em;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+
+        .kpi-value {
+            font-size: 2.5em;
+            font-weight: 700;
+            color: #2c3e50;
+            margin: 10px 0;
+        }
+
+        .kpi-subtitle {
+            color: #95a5a6;
+            font-size: 0.9em;
+            margin-top: 5px;
+        }
+
+        .kpi-change {
+            font-size: 0.85em;
+            padding: 4px 10px;
+            border-radius: 15px;
+            display: inline-block;
+            margin-top: 8px;
+            font-weight: 500;
+        }
+
+        .kpi-change.positive {
+            background: #d5f4e6;
+            color: #27ae60;
+        }
+
+        .kpi-change.negative {
+            background: #fadbd8;
+            color: #e74c3c;
+        }
+
+        .kpi-change.neutral {
+            background: #ebedef;
+            color: #5d6d7e;
+        }
+
+        /* Chart Grid */
+        .chart-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .chart-container {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .chart-title {
+            font-size: 1.2em;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #ecf0f1;
+        }
+
+        .chart-wrapper {
+            position: relative;
+            height: 400px;
+        }
+
+        .full-width-chart {
+            grid-column: 1 / -1;
+        }
+
+        /* Funnel Styles */
+        .funnel-container {
+            width: 100%;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .funnel-chart {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .funnel-segment {
+            height: 55px;
+            width: calc(95% - (var(--segment-index) * 8%));
+            min-width: 180px;
+            background: linear-gradient(135deg, 
+                hsl(calc(200 + var(--segment-index) * 25), 70%, 55%), 
+                hsl(calc(200 + var(--segment-index) * 25), 70%, 45%)
+            );
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.15);
+            position: relative;
+            clip-path: polygon(
+                calc(var(--segment-index) * 3%) 0%, 
+                calc(100% - var(--segment-index) * 3%) 0%, 
+                calc(100% - (var(--segment-index) + 1) * 3%) 100%, 
+                calc((var(--segment-index) + 1) * 3%) 100%
+            );
+        }
+
+        .funnel-segment:hover {
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+            z-index: 10;
+        }
+
+        .funnel-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: white;
+            font-weight: 600;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+            z-index: 5;
+        }
+
+        .stage-name {
+            font-size: 0.85em;
+            margin-bottom: 2px;
+            opacity: 0.95;
+        }
+
+        .stage-count {
+            font-size: 1.3em;
+            font-weight: 700;
+            margin: 1px 0;
+        }
+
+        .stage-percentage {
+            font-size: 0.75em;
+            opacity: 0.9;
+        }
+
+        /* Bottleneck Alert */
+        .bottleneck-alert {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            margin: 20px 0;
+            box-shadow: 0 4px 15px rgba(231, 76, 60, 0.3);
+        }
+
+        .bottleneck-alert h3 {
+            font-size: 1.2em;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .bottleneck-alert p {
+            font-size: 1em;
+            opacity: 0.95;
+        }
+
+        /* Data Table */
+        .data-table-container {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            margin-top: 20px;
+            overflow-x: auto;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        .data-table th,
+        .data-table td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #ecf0f1;
+        }
+
+        .data-table th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #2c3e50;
+            font-size: 0.9em;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .data-table tr:hover {
+            background: #f8f9fa;
+        }
+
+        .status-badge {
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-size: 0.8em;
+            font-weight: 500;
+            text-align: center;
+            white-space: nowrap;
+        }
+
+        .status-onboarded { background: #d5f4e6; color: #27ae60; }
+        .status-job-offer { background: #d6eaf8; color: #2980b9; }
+        .status-interview { background: #fcf3cf; color: #d68910; }
+        .status-review { background: #fadbd8; color: #e74c3c; }
+        .status-pending { background: #ebedef; color: #5d6d7e; }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 1.8em;
+            }
+            
+            .date-badge {
+                position: static;
+                margin-top: 15px;
+                display: inline-block;
+            }
+            
+            .kpi-grid {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+            
+            .chart-grid {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+            
+            .nav-tabs {
+                flex-direction: column;
+            }
+            
+            .main-content {
+                padding: 20px;
+            }
+            
+            .chart-wrapper {
+                height: 300px;
+            }
+            
+            .kpi-value {
+                font-size: 2em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Header -->
+        <div class="header">
+            <div class="date-badge">Data as of July 14, 2025</div>
+            <h1>🎯 PSP Talent Acquisition Dashboard</h1>
+            <p>Executive Performance Overview</p>
+        </div>
+
+        <!-- Navigation Tabs -->
+        <div class="nav-tabs">
+            <button class="nav-tab active" onclick="showTab('psp')">PSP Division</button>
+            <button class="nav-tab" onclick="showTab('pmo')">PMO Division</button>
+            <button class="nav-tab" onclick="showTab('detailed')">Detailed Data</button>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- PSP Division Tab -->
+            <div id="psp" class="tab-content active">
+                <h2 style="margin-bottom: 25px; color: #2c3e50;">PSP Division Performance</h2>
+                
+                <!-- PSP KPIs -->
+                <div class="kpi-grid">
+                    <div class="kpi-card success">
+                        <div class="kpi-label">Fill Rate</div>
+                        <div class="kpi-value">46%</div>
+                        <div class="kpi-subtitle">37 filled / 81 total positions</div>
+                        <div class="kpi-change positive">✅ Above target</div>
+                    </div>
+                    
+                    <div class="kpi-card danger">
+                        <div class="kpi-label">Critical Bottleneck</div>
+                        <div class="kpi-value">12</div>
+                        <div class="kpi-subtitle">Positions stuck at HRBP Review</div>
+                        <div class="kpi-change negative">⚠️ Immediate attention needed</div>
+                    </div>
+                    
+                    <div class="kpi-card info">
+                        <div class="kpi-label">Active Roles</div>
+                        <div class="kpi-value">44</div>
+                        <div class="kpi-subtitle">Currently recruiting</div>
+                        <div class="kpi-change neutral">📋 In progress</div>
+                    </div>
+                    
+                    <div class="kpi-card success">
+                        <div class="kpi-label">Successful Hires</div>
+                        <div class="kpi-value">6</div>
+                        <div class="kpi-subtitle">YTD 2025</div>
+                        <div class="kpi-change positive">📈 On track</div>
+                    </div>
+                </div>
+
+                <!-- Bottleneck Alert -->
+                <div class="bottleneck-alert">
+                    <h3>🚨 Critical Bottleneck Alert</h3>
+                    <p><strong>12 PSP positions</strong> are stuck at HRBP CV Review stage. Average wait time: <strong>12 days</strong>. Recommend adding additional HRBP reviewers or implementing batch review sessions.</p>
+                </div>
+
+                <!-- PSP Charts -->
+                <div class="chart-grid">
+                    <div class="chart-container">
+                        <div class="chart-title">📈 Monthly Hiring Trends</div>
+                        <div class="chart-wrapper">
+                            <canvas id="psp-monthly-chart"></canvas>
+                        </div>
+                    </div>
+                    
+                    <div class="chart-container">
+                        <div class="chart-title">🔍 PSP Pipeline Funnel</div>
+                        <div class="chart-wrapper" id="psp-funnel-container">
+                            <canvas id="psp-funnel-chart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PMO Division Tab -->
+            <div id="pmo" class="tab-content">
+                <h2 style="margin-bottom: 25px; color: #2c3e50;">PMO Division Performance</h2>
+                
+                <!-- PMO KPIs -->
+                <div class="kpi-grid">
+                    <div class="kpi-card danger">
+                        <div class="kpi-label">Fill Rate</div>
+                        <div class="kpi-value">12%</div>
+                        <div class="kpi-subtitle">2 filled / 17 total positions</div>
+                        <div class="kpi-change negative">❌ Below target</div>
+                    </div>
+                    
+                    <div class="kpi-card danger">
+                        <div class="kpi-label">Critical Bottleneck</div>
+                        <div class="kpi-value">13</div>
+                        <div class="kpi-subtitle">Positions stuck at HRBP Review</div>
+                        <div class="kpi-change negative">🚨 Urgent action required</div>
+                    </div>
+                    
+                    <div class="kpi-card warning">
+                        <div class="kpi-label">Active Roles</div>
+                        <div class="kpi-value">15</div>
+                        <div class="kpi-subtitle">Currently recruiting</div>
+                        <div class="kpi-change neutral">📋 In progress</div>
+                    </div>
+                    
+                    <div class="kpi-card warning">
+                        <div class="kpi-label">Successful Hires</div>
+                        <div class="kpi-value">2</div>
+                        <div class="kpi-subtitle">YTD 2025</div>
+                        <div class="kpi-change negative">📉 Below target</div>
+                    </div>
+                </div>
+
+                <!-- PMO Bottleneck Alert -->
+                <div class="bottleneck-alert">
+                    <h3>🚨 Critical Bottleneck Alert - PMO</h3>
+                    <p><strong>13 PMO positions</strong> are stuck at HRBP CV Review stage. PMO performance significantly behind PSP. Recommend dedicated PMO recruitment support and specialized reviewer assignment.</p>
+                </div>
+
+                <!-- PMO Charts -->
+                <div class="chart-grid">
+                    <div class="chart-container">
+                        <div class="chart-title">⚖️ PSP vs PMO Comparison</div>
+                        <div class="chart-wrapper">
+                            <canvas id="pmo-comparison-chart"></canvas>
+                        </div>
+                    </div>
+                    
+                    <div class="chart-container">
+                        <div class="chart-title">🔍 PMO Pipeline Funnel</div>
+                        <div class="chart-wrapper" id="pmo-funnel-container">
+                            <canvas id="pmo-funnel-chart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Detailed Data Tab -->
+            <div id="detailed" class="tab-content">
+                <h2 style="margin-bottom: 25px; color: #2c3e50;">Detailed Recruitment Data</h2>
+                
+                <!-- PSP Table -->
+                <div class="data-table-container">
+                    <h3 style="margin-bottom: 15px; color: #2c3e50;">PSP Division Pipeline</h3>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Position</th>
+                                <th>Total CVs</th>
+                                <th>TA Review</th>
+                                <th>HRBP Review</th>
+                                <th>HR Interview</th>
+                                <th>Panel Interview</th>
+                                <th>Final Interview</th>
+                                <th>Status</th>
+                                <th>Action Required</th>
+                            </tr>
+                        </thead>
+                        <tbody id="psp-table-body">
+                            <!-- Data will be populated by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- PMO Table -->
+                <div class="data-table-container">
+                    <h3 style="margin-bottom: 15px; color: #2c3e50;">PMO Division Pipeline</h3>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Position</th>
+                                <th>Total CVs</th>
+                                <th>TA Review</th>
+                                <th>HRBP Review</th>
+                                <th>HR Interview</th>
+                                <th>Panel Interview</th>
+                                <th>Status</th>
+                                <th>Action Required</th>
+                            </tr>
+                        </thead>
+                        <tbody id="pmo-table-body">
+                            <!-- Data will be populated by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global Variables
+        let charts = {};
+        let currentTab = 'psp';
+
+        // Data Structure
+        const recruitmentData = {
+            psp: {
+                summary: {
+                    totalPositions: 81,
+                    filledPositions: 37,
+                    ongoingPositions: 44,
+                    fillRate: 46,
+                    dataAsOf: "July 11, 2025"
+                },
+                monthlyData: [
+                    { month: 'Jan', openRoles: { hq: 4, pakil: 29, wawa: 21 }, onboard: 20 },
+                    { month: 'Feb', openRoles: { hq: 4, pakil: 26, wawa: 22 }, onboard: 22 },
+                    { month: 'Mar', openRoles: { hq: 4, pakil: 24, wawa: 22 }, onboard: 24 },
+                    { month: 'Apr', openRoles: { hq: 4, pakil: 23, wawa: 17 }, onboard: 30 },
+                    { month: 'May', openRoles: { hq: 3, pakil: 23, wawa: 19 }, onboard: 33 },
+                    { month: 'Jun', openRoles: { hq: 4, pakil: 21, wawa: 20 }, onboard: 36 },
+                    { month: 'Jul', openRoles: { hq: 4, pakil: 21, wawa: 19 }, onboard: 37 }
+                ],
+                pipeline: [
+                    { position: 'PM Civil (Lower Area)', totalCVs: 7, taReview: 7, hrbpReview: 4, hrInterview: 0, hrbpInterview: 0, panelInterview: 0, finalInterview: 0, status: 'HRBP CV Review' },
+                    { position: 'Compliance & Permits Superintendent', totalCVs: 58, taReview: 48, hrbpReview: 48, hrInterview: 31, hrbpInterview: 18, panelInterview: 13, finalInterview: 5, duffAssessment: 2, status: 'HR Interview', remarks: '4 cdd for HRI, Faith Que awaiting feedback, Ronald Reyes for interview' },
+                    { position: 'Compliance & Permits Officer', totalCVs: 16, taReview: 13, hrbpReview: 13, hrInterview: 0, hrbpInterview: 2, panelInterview: 1, finalInterview: 3, duffAssessment: 1, status: 'HRBP CV Review' },
+                    { position: 'Project Delivery Director', totalCVs: 16, taReview: 13, hrbpReview: 13, hrInterview: 0, hrbpInterview: 2, panelInterview: 1, finalInterview: 3, duffAssessment: 1, status: 'Onboarded', hired: 'Josh Gerard', onboardDate: 'May 26' },
+                    { position: 'Technical Lead', totalCVs: 11, taReview: 11, hrbpReview: 11, hrInterview: 0, hrbpInterview: 3, panelInterview: 1, finalInterview: 3, duffAssessment: 1, jobOffer: 1, status: 'Revisit', candidate: 'David Ellis' },
+                    { position: 'Contracts Manager', totalCVs: 94, taReview: 27, hrbpReview: 19, hrInterview: 15, hrbpInterview: 8, panelInterview: 7, finalInterview: 1, status: 'Job Offer', candidate: 'Rhena Magnaye', remarks: '7 cdd for CV review, Christine Belen awaiting JO decision' },
+                    { position: 'HSE Manager', totalCVs: 370, taReview: 32, hrbpReview: 21, hrInterview: 20, hrbpInterview: 14, panelInterview: 8, finalInterview: 3, status: 'HRBP Interview', remarks: '11 cdd for CV review, 1 cdd for HRBP Interview' },
+                    { position: 'Regulatory Head', totalCVs: 1, taReview: 1, hrbpReview: 1, hrInterview: 1, hrbpInterview: 1, panelInterview: 1, finalInterview: 1, duffAssessment: 1, status: 'Onboarded', hired: 'Miguel Marfil', onboardDate: 'June 2' },
+                    { position: 'Project Engineer (PSP HQ)', totalCVs: 1, taReview: 1, hrbpReview: 1, hrInterview: 1, hrbpInterview: 1, panelInterview: 1, finalInterview: 1, duffAssessment: 1, status: 'Onboarded', hired: 'Kay Ann Amparo', onboardDate: 'June 30, 2025' },
+                    { position: 'HR/Admin Officer', totalCVs: 115, taReview: 13, hrbpReview: 12, hrInterview: 7, hrbpInterview: 4, panelInterview: 1, finalInterview: 0, status: 'HRBP CV Review' },
+                    { position: 'Security Manager', totalCVs: 2, taReview: 2, hrbpReview: 1, hrInterview: 1, hrbpInterview: 1, panelInterview: 1, finalInterview: 1, duffAssessment: 1, status: 'HRBP CV Review', candidate: 'Alex Rillera' },
+                    { position: 'Project Engineer (Pakil PSP)', totalCVs: 3, taReview: 1, hrbpReview: 1, hrInterview: 1, hrbpInterview: 1, panelInterview: 1, finalInterview: 1, duffAssessment: 1, status: 'Onboarded', hired: 'Dennis Mascarenas', onboardDate: 'June 23' },
+                    { position: 'Document Control Clerk', totalCVs: 30, taReview: 15, hrbpReview: 2, hrInterview: 2, hrbpInterview: 1, panelInterview: 1, finalInterview: 1, duffAssessment: 1, status: 'HRBP CV Review', candidate: 'Ayn Khea Villarba', remarks: 'Revisit 13 CVs for review if need to hire another HC' },
+                    { position: 'CHN Interpreter', totalCVs: 4, taReview: 4, hrbpReview: 0, hrInterview: 0, hrbpInterview: 0, panelInterview: 0, finalInterview: 0, status: 'HRBP CV Review' },
+                    { position: 'CAD Operator', totalCVs: 3, taReview: 3, hrbpReview: 0, hrInterview: 0, hrbpInterview: 0, panelInterview: 0, finalInterview: 0, status: 'HRBP CV Review', remarks: '3 cdd for CV review' },
+                    { position: 'Sr. Project Manager Electro-Mechanical', totalCVs: 1, taReview: 1, hrbpReview: 0, hrInterview: 0, hrbpInterview: 0, panelInterview: 0, finalInterview: 0, status: 'HRBP CV Review' },
+                    { position: 'Planner/Scheduler', totalCVs: 9, taReview: 9, hrbpReview: 1, hrInterview: 1, hrbpInterview: 1, panelInterview: 1, finalInterview: 1, duffAssessment: 1, status: 'Onboarded', hired: 'Rommel Tala', remarks: 'Revisit 8 CVs for review if need to hire another HC' },
+                    { position: 'PM Underground', totalCVs: 17, taReview: 17, hrbpReview: 5, hrInterview: 2, hrbpInterview: 2, panelInterview: 2, finalInterview: 1, status: 'HRBP CV Review', candidate: 'Malcolm Moxon' },
+                    { position: 'SCM Specialist (PSP)', totalCVs: 28, taReview: 28, hrbpReview: 27, hrInterview: 18, hrbpInterview: 2, panelInterview: 8, finalInterview: 0, status: 'Job Offer', candidate: 'Meynard Molina', remarks: 'pending HRBP update on JO discussion sched' },
+                    { position: 'Cost Control Engineer', totalCVs: 47, taReview: 30, hrbpReview: 18, hrInterview: 15, hrbpInterview: 6, panelInterview: 4, finalInterview: 2, status: 'Onboarded', hired: 'Kathy Bacani', onboardDate: 'June 30' },
+                    { position: 'Project Delivery Deputy Director', totalCVs: 3, taReview: 3, hrbpReview: 1, hrInterview: 0, hrbpInterview: 1, panelInterview: 1, finalInterview: 1, finalNoel: 0, status: 'Final Interview', candidate: 'Simon Leeper', remarks: 'Pending interview with Andres, awaiting candidate availability' },
+                    { position: 'PM Upper Reservoir', totalCVs: 2, taReview: 2, hrbpReview: 2, hrInterview: 0, hrbpInterview: 2, panelInterview: 2, finalInterview: 0.5, status: 'Job Offer', candidate: 'Michael Neumann', remarks: 'Rodolfo Laguna for Noel interview, Michael Neumann for JO process' }
+                ]
+            },
+            pmo: {
+                summary: {
+                    totalPositions: 17,
+                    filledPositions: 2,
+                    ongoingPositions: 15,
+                    fillRate: 12,
+                    dataAsOf: "July 4, 2025"
+                },
+                pipeline: [
+                    { position: 'Cost and Commercial Lead', totalCVs: 29, taReview: 9, hrbpReview: 0, hrInterview: 0, hrbpInterview: 0, panelInterview: 0, finalInterview: 0, status: 'HRBP CV Review' },
+                    { position: 'Cost Controller 1', totalCVs: 18, taReview: 9, hrbpReview: 0, hrInterview: 0, hrbpInterview: 0, panelInterview: 0, finalInterview: 0, status: 'HRBP CV Review' },
+                    { position: 'Cost Controller 2', totalCVs: 0, taReview: 0, hrbpReview: 0, hrInterview: 0, hrbpInterview: 0, panelInterview: 0, finalInterview: 0, status: 'HRBP CV Review' },
+                    { position: 'Quantity Surveyor 1', totalCVs: 57, taReview: 6, hrbpReview: 0, hrInterview: 0, hrbpInterview: 0, panelInterview: 0, finalInterview: 0, status: 'HRBP CV Review' },
+                    { position: 'Quantity Surveyor 2', totalCVs: 0, taReview: 0, hrbpReview: 0, hrInterview: 0, hrbpInterview: 0, panelInterview: 0, finalInterview: 0, status: 'HRBP CV Review' },
+                    { position: 'Document Controller 1', totalCVs: 66, taReview: 11, hrbpReview: 0, hrInterview: 0, hrbpInterview: 0, panelInterview: 0, finalInterview: 0, status: 'Onboarded', hired: 'Dean Orvilla, Ayn Villarba', remarks: 'Review 11 CVs if need to hire for back-up' },
+                    { position: 'Document Controller 2', totalCVs: 0, taReview: 0, hrbpReview: 0, hrInterview: 0, hrbpInterview: 0, panelInterview: 0, finalInterview: 0, status: 'Onboarded', hired: 'Ayn Villarba' },
+                    { position: 'Information & Document Manager', totalCVs: 29, taReview: 4, hrbpReview: 0, hrInterview: 0, hrbpInterview: 0, panelInterview: 0, finalInterview: 0, status: 'HRBP CV Review' },
+                    { position: 'Planning Manager', totalCVs: 54, taReview: 14, hrbpReview: 1, hrInterview: 1, hrbpInterview: 1, panelInterview: 0, finalInterview: 0, status: 'Panel Interview', candidate: 'John Eric Maltiltin', remarks: 'for interview of Josh & Grant' },
+                    { position: 'Project Planner 1', totalCVs: 63, taReview: 7, hrbpReview: 0, hrInterview: 0, hrbpInterview: 0, panelInterview: 0, finalInterview: 0, status: 'HRBP CV Review' },
+                    { position: 'Project Planner 2', totalCVs: 0, taReview: 0, hrbpReview: 0, hrInterview: 0, hrbpInterview: 0, panelInterview: 0, finalInterview: 0, status: 'HRBP CV Review' },
+                    { position: 'PMO Lead', totalCVs: 48, taReview: 5, hrbpReview: 0, hrInterview: 0, hrbpInterview: 0, panelInterview: 0, finalInterview: 0, status: 'HRBP CV Review' },
+                    { position: 'Project Controls Lead', totalCVs: 19, taReview: 3, hrbpReview: 0, hrInterview: 0, hrbpInterview: 0, panelInterview: 0, finalInterview: 0, status: 'HRBP CV Review' },
+                    { position: 'Project Controls Manager 1', totalCVs: 42, taReview: 7, hrbpReview: 0, hrInterview: 0, hrbpInterview: 0, panelInterview: 0, finalInterview: 0, status: 'HRBP CV Review' },
+                    { position: 'Project Controls Manager 2', totalCVs: 0, taReview: 0, hrbpReview: 0, hrInterview: 0, hrbpInterview: 0, panelInterview: 0, finalInterview: 0, status: 'HRBP CV Review' },
+                    { position: 'Reporting Manager', totalCVs: 10, taReview: 2, hrbpReview: 0, hrInterview: 0, hrbpInterview: 0, panelInterview: 0, finalInterview: 0, status: 'HRBP CV Review' },
+                    { position: 'Risk Manager', totalCVs: 12, taReview: 4, hrbpReview: 0, hrInterview: 0, hrbpInterview: 0, panelInterview: 0, finalInterview: 0, status: 'HRBP CV Review' }
+                ]
+            }
+        };
+
+        // Initialize Dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🚀 Executive Dashboard Initializing...');
+            initializeCharts();
+            populateDataTables();
+            console.log('✅ Dashboard Ready!');
+        });
+
+        // Tab Navigation
+        function showTab(tabName) {
+            // Hide all tab contents
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Remove active class from all tabs
+            document.querySelectorAll('.nav-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Show selected tab content
+            document.getElementById(tabName).classList.add('active');
+            
+            // Add active class to clicked tab
+            event.target.classList.add('active');
+            
+            currentTab = tabName;
+            
+            // Refresh charts when tab becomes visible
+            setTimeout(() => {
+                Object.values(charts).forEach(chart => {
+                    if (chart && chart.resize) {
+                        chart.resize();
+                    }
+                });
+            }, 100);
+        }
+
+        // Initialize All Charts
+        function initializeCharts() {
+            initPSPMonthlyChart();
+            initPMOComparisonChart();
+            initPSPFunnel();
+            initPMOFunnel();
+        }
+
+        // PSP Monthly Trends Chart
+        function initPSPMonthlyChart() {
+            const ctx = document.getElementById('psp-monthly-chart').getContext('2d');
+            
+            charts.pspMonthly = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: recruitmentData.psp.monthlyData.map(d => d.month),
+                    datasets: [{
+                        label: 'Hires',
+                        data: recruitmentData.psp.monthlyData.map(d => d.onboard),
+                        backgroundColor: 'rgba(39, 174, 96, 0.2)',
+                        borderColor: '#27ae60',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4,
+                        pointBackgroundColor: '#27ae60',
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 2,
+                        pointRadius: 6
+                    }, {
+                        label: 'Open Roles',
+                        data: recruitmentData.psp.monthlyData.map(d => 
+                            d.openRoles.hq + d.openRoles.pakil + d.openRoles.wawa
+                        ),
+                        backgroundColor: 'rgba(52, 152, 219, 0.2)',
+                        borderColor: '#3498db',
+                        borderWidth: 3,
+                        fill: false,
+                        tension: 0.4,
+                        pointBackgroundColor: '#3498db',
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 2,
+                        pointRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            labels: {
+                                usePointStyle: true,
+                                padding: 20
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: 'rgba(0,0,0,0.1)'
+                            }
+                        },
+                        x: {
+                            grid: {
+                                color: 'rgba(0,0,0,0.1)'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // PMO Comparison Chart
+        function initPMOComparisonChart() {
+            const ctx = document.getElementById('pmo-comparison-chart').getContext('2d');
+            
+            charts.pmoComparison = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Fill Rate (%)', 'Active Roles', 'Successful Hires', 'Avg Time to Hire (days)'],
+                    datasets: [{
+                        label: 'PSP Division',
+                        data: [46, 44, 6, 32],
+                        backgroundColor: 'rgba(39, 174, 96, 0.8)',
+                        borderColor: '#27ae60',
+                        borderWidth: 2,
+                        borderRadius: 4
+                    }, {
+                        label: 'PMO Division',
+                        data: [12, 15, 2, 48],
+                        backgroundColor: 'rgba(231, 76, 60, 0.8)',
+                        borderColor: '#e74c3c',
+                        borderWidth: 2,
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            labels: {
+                                usePointStyle: true,
+                                padding: 20
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: 'rgba(0,0,0,0.1)'
+                            }
+                        },
+                        x: {
+                            grid: {
+                                color: 'rgba(0,0,0,0.1)'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Calculate PSP funnel data
+        function calculatePSPFunnelData() {
+            const pspPositions = recruitmentData.psp.pipeline;
+            
+            const totalCVs = pspPositions.reduce((sum, p) => sum + (p.totalCVs || 0), 0);
+            const taReview = pspPositions.reduce((sum, p) => sum + (p.taReview || 0), 0);
+            const hrbpReview = pspPositions.reduce((sum, p) => sum + (p.hrbpReview || 0), 0);
+            const hrInterview = pspPositions.reduce((sum, p) => sum + (p.hrInterview || 0), 0);
+            const panelInterview = pspPositions.reduce((sum, p) => sum + (p.panelInterview || 0), 0);
+            const finalInterview = pspPositions.reduce((sum, p) => sum + (p.finalInterview || 0), 0);
+            const hired = pspPositions.filter(p => p.status === 'Onboarded').length;
+            
+            return [
+                { stage: 'CVs Received', count: totalCVs, percentage: 100 },
+                { stage: 'TA Review', count: taReview, percentage: totalCVs > 0 ? Math.round((taReview/totalCVs)*100) : 0 },
+                { stage: 'HRBP Review', count: hrbpReview, percentage: totalCVs > 0 ? Math.round((hrbpReview/totalCVs)*100) : 0 },
+                { stage: 'HR Interview', count: hrInterview, percentage: totalCVs > 0 ? Math.round((hrInterview/totalCVs)*100) : 0 },
+                { stage: 'Panel Interview', count: panelInterview, percentage: totalCVs > 0 ? Math.round((panelInterview/totalCVs)*100) : 0 },
+                { stage: 'Final Interview', count: finalInterview, percentage: totalCVs > 0 ? Math.round((finalInterview/totalCVs)*100) : 0 },
+                { stage: 'Hired', count: hired, percentage: totalCVs > 0 ? Math.round((hired/totalCVs)*100) : 0 }
+            ];
+        }
+
+        // Calculate PMO funnel data
+        function calculatePMOFunnelData() {
+            const pmoPositions = recruitmentData.pmo.pipeline;
+            
+            const totalCVs = pmoPositions.reduce((sum, p) => sum + (p.totalCVs || 0), 0);
+            const taReview = pmoPositions.reduce((sum, p) => sum + (p.taReview || 0), 0);
+            const hrbpReview = pmoPositions.reduce((sum, p) => sum + (p.hrbpReview || 0), 0);
+            const hrInterview = pmoPositions.reduce((sum, p) => sum + (p.hrInterview || 0), 0);
+            const panelInterview = pmoPositions.reduce((sum, p) => sum + (p.panelInterview || 0), 0);
+            const finalInterview = pmoPositions.reduce((sum, p) => sum + (p.finalInterview || 0), 0);
+            const hired = pmoPositions.filter(p => p.status === 'Onboarded').length;
+            
+            return [
+                { stage: 'CVs Received', count: totalCVs, percentage: 100 },
+                { stage: 'TA Review', count: taReview, percentage: totalCVs > 0 ? Math.round((taReview/totalCVs)*100) : 0 },
+                { stage: 'HRBP Review', count: hrbpReview, percentage: totalCVs > 0 ? Math.round((hrbpReview/totalCVs)*100) : 0 },
+                { stage: 'HR Interview', count: hrInterview, percentage: totalCVs > 0 ? Math.round((hrInterview/totalCVs)*100) : 0 },
+                { stage: 'Panel Interview', count: panelInterview, percentage: totalCVs > 0 ? Math.round((panelInterview/totalCVs)*100) : 0 },
+                { stage: 'Final Interview', count: finalInterview, percentage: totalCVs > 0 ? Math.round((finalInterview/totalCVs)*100) : 0 },
+                { stage: 'Hired', count: hired, percentage: totalCVs > 0 ? Math.round((hired/totalCVs)*100) : 0 }
+            ];
+        }
+
+        // PSP Funnel
+        function initPSPFunnel() {
+            const container = document.getElementById('psp-funnel-container');
+            const canvas = document.getElementById('psp-funnel-chart');
+            canvas.style.display = 'none';
+            
+            const pspData = calculatePSPFunnelData();
+            
+            const funnelHTML = `
+                <div class="funnel-container">
+                    <div class="funnel-chart">
+                        ${pspData.map((stage, index) => `
+                            <div class="funnel-segment" 
+                                 style="--segment-index: ${index}; --total-segments: ${pspData.length};">
+                                <div class="funnel-content">
+                                    <span class="stage-name">${stage.stage}</span>
+                                    <span class="stage-count">${stage.count.toLocaleString()}</span>
+                                    <span class="stage-percentage">${stage.percentage}%</span>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+            
+            container.insertAdjacentHTML('beforeend', funnelHTML);
+        }
+
+        // PMO Funnel
+        function initPMOFunnel() {
+            const container = document.getElementById('pmo-funnel-container');
+            const canvas = document.getElementById('pmo-funnel-chart');
+            canvas.style.display = 'none';
+            
+            const pmoData = calculatePMOFunnelData();
+            
+            const funnelHTML = `
+                <div class="funnel-container">
+                    <div class="funnel-chart">
+                        ${pmoData.map((stage, index) => `
+                            <div class="funnel-segment" 
+                                 style="--segment-index: ${index}; --total-segments: ${pmoData.length};">
+                                <div class="funnel-content">
+                                    <span class="stage-name">${stage.stage}</span>
+                                    <span class="stage-count">${stage.count.toLocaleString()}</span>
+                                    <span class="stage-percentage">${stage.percentage}%</span>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+            
+            container.insertAdjacentHTML('beforeend', funnelHTML);
+        }
+
+        // Populate Data Tables
+        function populateDataTables() {
+            populatePSPTable();
+            populatePMOTable();
+        }
+
+        function populatePSPTable() {
+            const tbody = document.getElementById('psp-table-body');
+            tbody.innerHTML = '';
+            
+            recruitmentData.psp.pipeline.forEach(position => {
+                const row = document.createElement('tr');
+                
+                const actionRequired = getActionRequired(position);
+                const statusClass = getStatusClass(position.status);
+                
+                row.innerHTML = `
+                    <td><strong>${position.position}</strong></td>
+                    <td>${position.totalCVs || 0}</td>
+                    <td>${position.taReview || 0}</td>
+                    <td>${position.hrbpReview || 0}</td>
+                    <td>${position.hrInterview || 0}</td>
+                    <td>${position.panelInterview || 0}</td>
+                    <td>${position.finalInterview || 0}</td>
+                    <td><span class="status-badge ${statusClass}">${position.status}</span>
+                        ${position.candidate ? `<br><small>👤 ${position.candidate}</small>` : ''}
+                        ${position.hired ? `<br><small>✅ ${position.hired}</small>` : ''}
+                    </td>
+                    <td>${actionRequired}</td>
+                `;
+                
+                tbody.appendChild(row);
+            });
+        }
+
+        function populatePMOTable() {
+            const tbody = document.getElementById('pmo-table-body');
+            tbody.innerHTML = '';
+            
+            recruitmentData.pmo.pipeline.forEach(position => {
+                const row = document.createElement('tr');
+                
+                const actionRequired = getActionRequired(position);
+                const statusClass = getStatusClass(position.status);
+                
+                row.innerHTML = `
+                    <td><strong>${position.position}</strong></td>
+                    <td>${position.totalCVs || 0}</td>
+                    <td>${position.taReview || 0}</td>
+                    <td>${position.hrbpReview || 0}</td>
+                    <td>${position.hrInterview || 0}</td>
+                    <td>${position.panelInterview || 0}</td>
+                    <td><span class="status-badge ${statusClass}">${position.status}</span>
+                        ${position.candidate ? `<br><small>👤 ${position.candidate}</small>` : ''}
+                        ${position.hired ? `<br><small>✅ ${position.hired}</small>` : ''}
+                    </td>
+                    <td>${actionRequired}</td>
+                `;
+                
+                tbody.appendChild(row);
+            });
+        }
+
+        function getActionRequired(position) {
+            switch(position.status) {
+                case 'HRBP CV Review':
+                    return '🔍 HRBP needs to review CVs';
+                case 'HR Interview':
+                    return '📞 Schedule HR interviews';
+                case 'HRBP Interview':
+                    return '👥 HRBP interview pending';
+                case 'Panel Interview':
+                    return '🎯 Panel interview required';
+                case 'Final Interview':
+                    return '🏁 Final interview pending';
+                case 'Job Offer':
+                    return '📋 Prepare job offer';
+                case 'Onboarded':
+                    return '✅ Completed';
+                case 'Revisit':
+                    return '🔄 Review and reassess';
+                default:
+                    return '⏳ In progress';
+            }
+        }
+
+        function getStatusClass(status) {
+            switch(status) {
+                case 'Onboarded':
+                    return 'status-onboarded';
+                case 'Job Offer':
+                    return 'status-job-offer';
+                case 'HR Interview':
+                case 'HRBP Interview':
+                case 'Panel Interview':
+                case 'Final Interview':
+                    return 'status-interview';
+                case 'HRBP CV Review':
+                    return 'status-review';
+                default:
+                    return 'status-pending';
+            }
+        }
+
+        // Global functions for HTML interactions
+        window.showTab = showTab;
+
+        // Console API for debugging
+        window.dashboardAPI = {
+            getData: () => recruitmentData,
+            getCharts: () => charts
+        };
+
+        console.log('🎯 Executive Dashboard API Ready');
+    </script>
+</body>
+</html>
